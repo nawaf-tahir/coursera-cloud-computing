@@ -23,7 +23,7 @@ fi
 INSTANCEIDS=$(aws ec2 describe-instances --output=text --query 'Reservations[*].Instances[*].InstanceId' --filter "Name=instance-state-name,Values=running")
 
 echo 'Finding autoscaling group names...'
-ASGNAMES=
+ASGNAMES=$(aws autoscaling describe-auto-scaling-groups --query 'AutoScalingGroups[*].AutoScalingGroupName' --output text)
 if [ "$ASGNAMES" != "" ]
   then
     echo "Found AutoScalingGroups: $ASGNAMES..."
@@ -32,17 +32,17 @@ if [ "$ASGNAMES" != "" ]
 
       aws autoscaling update-auto-scaling-group \
         --auto-scaling-group-name $ASGNAME \
-        --min-size 
+        --min-size 0
 
       aws autoscaling update-auto-scaling-group \
       --auto-scaling-group-name $ASGNAME \
-      --desired-capacity 
+      --desired-capacity 0
   
      if [ "$INSTANCEIDS" != "" ]
        then
          # Trying a trick here to use the ec2 terminate-instance waiter to let the autoscaling group wind down the instances
          echo "Waiting for all instances to be terminated..."
-         aws ec2 wait instance-terminated 
+         aws ec2 wait instance-terminated --instance-ids $INSTANCEIDS
          echo "All instances terminated..."
     else
       echo "No instances to wait for termination..."
@@ -57,7 +57,7 @@ fi
 
 echo "Finding TARGETARN..."
 # https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/elbv2/describe-target-groups.html
-TARGETARN=
+TARGETARN=$(aws elbv2 describe-target-groups --query 'TargetGroups[*].TargetGroupArn' --output text)
 if [ "$TARGETARN" != "" ]
   then
     echo "Found TargetARN: $TARGETARN..."
@@ -85,7 +85,7 @@ fi
 
 echo "Looking up ELB ARN..."
 # https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/elbv2/describe-load-balancers.html
-ELBARN=
+ELBARN=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerArn' --output text)
 echo $ELBARN
 
 # Collect ListenerARN
@@ -95,7 +95,7 @@ echo $ELBARN
     for ELB in ${ELBARNSARRAY[@]};
       do
         echo "Deleting Listener..."
-        LISTENERARN=$(aws elbv2 describe-listeners --load-balancer-arn $ELB --query='Listeners[*].ListenerArn')
+        LISTENERARN=$(aws elbv2 describe-listeners --load-balancer-arn $ELB --query='Listeners[*].ListenerArn' --output text)
         aws elbv2 delete-listener --listener-arn $LISTENERARN
         echo "Listener deleted..."
       done
@@ -132,7 +132,7 @@ fi
 
 echo 'Finding autoscaling groups for deletion...'
 # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/autoscaling/delete-auto-scaling-group.html
-ASGNAMES=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName")
+ASGNAMES=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text)
 if [ "$ASGNAMES" = "" ];
 then
   echo "No Autoscaling Groups found..."
