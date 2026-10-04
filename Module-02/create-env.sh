@@ -32,7 +32,8 @@ aws ec2 run-instances \
     --key-name $3 \
     --security-group-ids $4 \
     --user-data file://$6 \
-    --tag-specifications 'ResourceType=instance,Tags=[{Key=module,Value=$7}]'
+    --tag-specifications "ResourceType=instance,Tags=[{Key=module,Value=$7}]" \
+    --no-cli-pager
 
 #https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/wait/instance-running.html
 echo "Waiting until instances are in RUNNING state..."
