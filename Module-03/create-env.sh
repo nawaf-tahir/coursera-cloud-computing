@@ -55,25 +55,16 @@ aws elbv2 create-listener --load-balancer-arn $ELBARN --protocol HTTP --port 80 
 
 echo "Beginning to create and launch instances..."
 # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/run-instances.html
-for (( i=1; i<=$5; i++ ))
-do
-  if (( i % 2 == 1 )); then
-    SUBNET=$SUBNET2A
-  else
-    SUBNET=$SUBNET2B
-  fi
-  echo "Launching instance $i in subnet $SUBNET..."
 aws ec2 run-instances \
     --image-id $1 \
     --instance-type $2 \
-    --count 1 \
+    --count $5 \
     --key-name $3 \
     --security-group-ids $4 \
-    --subnet-id $SUBNET \
+    --subnet-id $SUBNET2A \
     --user-data file://$6 \
     --tag-specifications "ResourceType=instance,Tags=[{Key=module,Value=$7}]" \
     --no-cli-pager
-done
 
 # Collect Instance IDs
 # https://stackoverflow.com/questions/31744316/aws-cli-filter-or-logic
