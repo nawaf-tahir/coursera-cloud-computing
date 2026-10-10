@@ -133,7 +133,7 @@ resource "aws_lb_listener" "front_end" {
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/launch_template
 ##############################################################################
 resource "aws_launch_template" "mp1-lt" {
-  name_prefix = "foo"
+  #name_prefix = "foo"
   name = var.lt-name
   image_id                             = var.imageid
   instance_initiated_shutdown_behavior = "terminate"
